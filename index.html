@@ -12,77 +12,7 @@
       href="icon/3700401-microphone-radio-recording-sound-technology-vintage-voice_108796.png">
 
 <style>
-body{
-    font-family:Arial,sans-serif;
-    background:#f5f5f5;
-    margin:0;
-    padding:20px;
-}
 
-.file-input-wrapper{
-    margin: 15px 0;
-}
-
-.file-input{
-    width: 100%;
-    padding: 14px 16px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 15px;
-    color: #1e293b;
-    box-sizing: border-box;
-    transition: .25s;
-}
-
-.file-input:focus{
-    background: #fff;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 4px rgba(79,70,229,.15);
-}
-
-.file-input::placeholder{
-    color: #94a3b8;
-}
-
-button{
-    padding:12px 20px;
-    margin:5px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-#startBtn{
-    background:#28a745;
-    color:white;
-}
-
-#stopBtn{
-    background:#dc3545;
-    color:white;
-}
-
-#status{
-    margin-top:15px;
-    font-weight:bold;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:15px;
-}
-
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:left;
-}
-
-audio{
-    width:100%;
-}
 </style>
 
 </head>
@@ -111,22 +41,11 @@ audio{
     <p id="status">
         Siap merekam...
     </p>
-
-    <h3>📋 Daftar Recording</h3>
-
-    <table>
-
-        <thead>
-            <tr>
-                <th>Nama File</th>
-                <th>Audio</th>
-                <th>Download</th>
-            </tr>
-        </thead>
-
-        <tbody id="list"></tbody>
-
-    </table>
+    <h3 class="section-title">
+      📋 Daftar Recording
+      </h3>
+      
+      <div id="list"></div>
 
 </div>
 

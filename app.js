@@ -46,26 +46,24 @@ window.downloadFile = function(url, fileName) {
 // =========================
 // DELETE FILE
 // =========================
+window.deleteFile = async function(fileName){
 
-window.deleteFile = async function(fileName) {
+  const ok =
+  confirm("Hapus file ini?");
 
-    const ok = confirm(
-        "Hapus file ini?"
-    );
+  if(!ok) return;
 
-    if (!ok) return;
+  const { error } =
+  await supabaseClient.storage
+  .from("recordings")
+  .remove([fileName]);
 
-    const { error } =
-    await supabaseClient.storage
-    .from("recordings")
-    .remove([fileName]);
+  if(error){
+      alert(error.message);
+      return;
+  }
 
-    if (error) {
-        alert(error.message);
-        return;
-    }
-
-    loadFiles();
+  loadFiles();
 };
 
 // =========================
@@ -94,29 +92,42 @@ async function loadFiles() {
         .getPublicUrl(file.name);
 
         const row =
-        document.createElement("tr");
-
+        document.createElement("div");
         row.innerHTML = `
-            <td>${file.name}</td>
-
-            <td>
+        <div class="audio-card">
+        
+            <div class="audio-info">
+        
+                <div class="audio-name">
+                    ${file.name}
+                </div>
+        
                 <audio
                     controls
+                    preload="metadata"
                     src="${publicData.publicUrl}">
                 </audio>
-            </td>
-
-            <td>
-                <button onclick="downloadFile('${publicData.publicUrl}','${file.name}')">
-                    ⬇ Download
+        
+            </div>
+        
+            <div class="audio-actions">
+        
+                <button
+                    class="download-btn"
+                    onclick="downloadFile('${publicData.publicUrl}','${file.name}')">
+                    ⬇
                 </button>
-
-                <button onclick="deleteFile('${file.name}')">
-                    🗑 Delete
+        
+                <button
+                    class="delete-btn"
+                    onclick="deleteFile('${file.name}')">
+                    🗑
                 </button>
-            </td>
+        
+            </div>
+        
+        </div>
         `;
-
         list.appendChild(row);
     });
 }
@@ -186,34 +197,37 @@ stopBtn.onclick = () => {
                 type: "audio/webm"
             });
             
-            status.textContent =
-            "⏳ Mengkonversi ke MP3...";
-            
-            const mp3Blob =
-            await convertToMp3(webmBlob);
+            const audioBlob = webmBlob;
 
             let fileName =
             fileNameInput?.value.trim();
+            
+            if (!fileName) {
+                fileName =
+                "recording_" + Date.now();
+            }
+            
+            const finalName =
+            fileName + ".webm";
 
             if (!fileName) {
                 fileName =
                 "recording_" + Date.now();
             }
 
-            const finalName =
-            fileName + ".mp3";
+
 
             const { error } =
             await supabaseClient.storage
             .from("recordings")
             .upload(
               finalName,
-              mp3Blob,
-                {
-                  contentType: "audio/mpeg",
-                }
-            );
-
+              audioBlob,
+              {
+                  contentType: "audio/webm",
+                  upsert: true
+              }
+          );
             if (error)
                 throw error;
 
@@ -238,55 +252,6 @@ stopBtn.onclick = () => {
     startBtn.disabled = false;
     stopBtn.disabled = true;
 };
-
-
-// =========================
-// CONVERT WEBM TO MP3
-// =========================
-
-async function convertToMp3(webmBlob){
-
-  const {
-      FFmpeg
-  } = FFmpegWASM;
-
-  const ffmpeg =
-      new FFmpeg();
-
-  await ffmpeg.load();
-
-  const inputData =
-      new Uint8Array(
-          await webmBlob.arrayBuffer()
-      );
-
-  await ffmpeg.writeFile(
-      "input.webm",
-      inputData
-  );
-
-  await ffmpeg.exec([
-      "-i",
-      "input.webm",
-      "-vn",
-      "-ar","44100",
-      "-ac","2",
-      "-b:a","192k",
-      "output.mp3"
-  ]);
-
-  const output =
-      await ffmpeg.readFile(
-          "output.mp3"
-      );
-
-  return new Blob(
-      [output.buffer],
-      {
-          type:"audio/mpeg"
-      }
-  );
-}
 
 
 // =========================
