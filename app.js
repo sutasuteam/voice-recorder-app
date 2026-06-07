@@ -91,13 +91,24 @@ async function loadFiles() {
 
     const row = document.createElement("tr");
 
-    row.innerHTML = `
-      <td>${file.name}</td>
-      <td>
-        <button onclick="playAudio('${urlData.publicUrl}')">▶</button>
-        <button onclick="deleteFile('${file.name}')">🗑</button>
-      </td>
-    `;
+    window.renameAndDownload = (url, oldName) => {
+      let newName = prompt("Rename file sebelum download:", oldName);
+    
+      if (!newName) return;
+    
+      // pastikan ada ekstensi .webm
+      if (!newName.endsWith(".webm")) {
+        newName += ".webm";
+      }
+    
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = newName;
+    
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
 
     list.appendChild(row);
   });
