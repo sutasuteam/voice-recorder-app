@@ -13,10 +13,9 @@ const SUPABASE_URL =
 
 const SUPABASE_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YWpndHpmb3lhZGNucWZnanNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTQ3NzEsImV4cCI6MjA5NTMzMDc3MX0.kD81Imzw3NQ_ZTgj5nRPrKfh7Ong7Zmwt7I7WeyeM5M";
-
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
 // =========================
@@ -57,7 +56,7 @@ window.deleteFile = async function(fileName) {
     if (!ok) return;
 
     const { error } =
-    await supabase.storage
+    await supabaseClient.storage
     .from("recordings")
     .remove([fileName]);
 
@@ -78,7 +77,7 @@ async function loadFiles() {
     list.innerHTML = "";
 
     const { data, error } =
-    await supabase.storage
+    await supabaseClient.storage
     .from("recordings")
     .list();
 
@@ -90,7 +89,7 @@ async function loadFiles() {
     data.forEach(file => {
 
         const { data: publicData } =
-        supabase.storage
+        supabaseClient.storage
         .from("recordings")
         .getPublicUrl(file.name);
 
@@ -182,10 +181,16 @@ stopBtn.onclick = () => {
             status.textContent =
             "☁️ Upload ke Supabase...";
 
-            const audioBlob =
+            const webmBlob =
             new Blob(chunks, {
                 type: "audio/webm"
             });
+            
+            status.textContent =
+            "⏳ Mengkonversi ke MP3...";
+            
+            const mp3Blob =
+            await convertToMp3(webmBlob);
 
             let fileName =
             fileNameInput?.value.trim();
@@ -196,18 +201,16 @@ stopBtn.onclick = () => {
             }
 
             const finalName =
-            fileName + ".webm";
+            fileName + ".mp3";
 
             const { error } =
-            await supabase.storage
+            await supabaseClient.storage
             .from("recordings")
             .upload(
-                finalName,
-                audioBlob,
+              finalName,
+              mp3Blob,
                 {
-                    contentType:
-                    "audio/webm",
-                    upsert: true
+                  contentType: "audio/mpeg",
                 }
             );
 
@@ -235,6 +238,56 @@ stopBtn.onclick = () => {
     startBtn.disabled = false;
     stopBtn.disabled = true;
 };
+
+
+// =========================
+// CONVERT WEBM TO MP3
+// =========================
+
+async function convertToMp3(webmBlob){
+
+  const {
+      FFmpeg
+  } = FFmpegWASM;
+
+  const ffmpeg =
+      new FFmpeg();
+
+  await ffmpeg.load();
+
+  const inputData =
+      new Uint8Array(
+          await webmBlob.arrayBuffer()
+      );
+
+  await ffmpeg.writeFile(
+      "input.webm",
+      inputData
+  );
+
+  await ffmpeg.exec([
+      "-i",
+      "input.webm",
+      "-vn",
+      "-ar","44100",
+      "-ac","2",
+      "-b:a","192k",
+      "output.mp3"
+  ]);
+
+  const output =
+      await ffmpeg.readFile(
+          "output.mp3"
+      );
+
+  return new Blob(
+      [output.buffer],
+      {
+          type:"audio/mpeg"
+      }
+  );
+}
+
 
 // =========================
 // INIT
