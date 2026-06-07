@@ -8,14 +8,12 @@ const fileNameInput = document.getElementById("fileName");
 // SUPABASE
 // =========================
 
-const SUPABASE_URL =
-"https://btajgtzfoyadcnqfgjsg.supabase.co";
+const SUPABASE_URL = "https://btajgtzfoyadcnqfgjsg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YWpndHpmb3lhZGNucWZnanNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTQ3NzEsImV4cCI6MjA5NTMzMDc3MX0.kD81Imzw3NQ_ZTgj5nRPrKfh7Ong7Zmwt7I7WeyeM5M";
 
-const SUPABASE_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YWpndHpmb3lhZGNucWZnanNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTQ3NzEsImV4cCI6MjA5NTMzMDc3MX0.kD81Imzw3NQ_ZTgj5nRPrKfh7Ong7Zmwt7I7WeyeM5M";
 const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
+    SUPABASE_URL,
+    SUPABASE_KEY
 );
 
 // =========================
@@ -26,132 +24,122 @@ let mediaRecorder;
 let chunks = [];
 
 // =========================
-// DOWNLOAD FILE
+// DOWNLOAD
 // =========================
 
 window.downloadFile = function(url, fileName) {
-
     const a = document.createElement("a");
-
     a.href = url;
     a.download = fileName;
-
     document.body.appendChild(a);
-
     a.click();
-
     document.body.removeChild(a);
 };
 
 // =========================
-// DELETE FILE
+// DELETE
 // =========================
-window.deleteFile = async function(fileName){
 
-  const ok =
-  confirm("Hapus file ini?");
+window.deleteFile = async function(fileName) {
 
-  if(!ok) return;
+    const ok = confirm("Hapus file ini?");
+    if (!ok) return;
 
-  const { error } =
-  await supabaseClient.storage
-  .from("recordings")
-  .remove([fileName]);
+    const { error } = await supabaseClient.storage
+        .from("recordings")
+        .remove([fileName]);
 
-  if(error){
-      alert(error.message);
-      return;
-  }
+    if (error) {
+        alert(error.message);
+        return;
+    }
 
-  loadFiles();
+    loadFiles();
 };
 
 // =========================
-// LOAD FILES
+// LOAD FILES (FIXED)
 // =========================
 
 async function loadFiles() {
 
-    list.innerHTML = "";
+    list.innerHTML = "Loading...";
 
-    const { data, error } =
-    await supabaseClient.storage
-    .from("recordings")
-    .list();
+    const { data, error } = await supabaseClient.storage
+        .from("recordings")
+        .list();
 
     if (error) {
-        console.error(error);
+        console.error("SUPABASE ERROR:", error);
+        list.innerHTML = "❌ Gagal load file";
         return;
     }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = "<div class='empty-state'>Belum ada rekaman</div>";
+        return;
+    }
+
+    list.innerHTML = "";
 
     data.forEach(file => {
 
         const { data: publicData } =
-        supabaseClient.storage
-        .from("recordings")
-        .getPublicUrl(file.name);
+            supabaseClient.storage
+                .from("recordings")
+                .getPublicUrl(file.name);
 
-        const row =
-        document.createElement("div");
+        const row = document.createElement("div");
+
         row.innerHTML = `
         <div class="audio-card">
         
             <div class="audio-info">
         
                 <div class="audio-name">
-                    ${file.name}
+                    🎵 ${file.name}
                 </div>
         
-                <audio
-                    controls
-                    preload="metadata"
-                    src="${publicData.publicUrl}">
-                </audio>
+                <audio controls src="${publicData.publicUrl}"></audio>
         
             </div>
         
             <div class="audio-actions">
         
-                <button
-                    class="download-btn"
-                    onclick="downloadFile('${publicData.publicUrl}','${file.name}')">
-                    ⬇
+
+        
+                <button class="delete-btn"
+                    onclick="deleteFile('${file.name}')">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
         
-                <button
-                    class="delete-btn"
-                    onclick="deleteFile('${file.name}')">
-                    🗑
+                <button class="open-btn"
+                    onclick="window.location.href='player.html?file=${publicData.publicUrl}'">
+                    🎧
                 </button>
         
             </div>
         
         </div>
         `;
+
         list.appendChild(row);
     });
 }
 
 // =========================
-// START RECORDING
+// RECORDING
 // =========================
 
 startBtn.onclick = async () => {
 
     try {
 
-        const stream =
-        await navigator.mediaDevices.getUserMedia({
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            }
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
         });
 
-        mediaRecorder =
-        new MediaRecorder(stream);
-
+        mediaRecorder = new MediaRecorder(stream);
         chunks = [];
 
         mediaRecorder.ondataavailable = e => {
@@ -160,23 +148,18 @@ startBtn.onclick = async () => {
 
         mediaRecorder.start();
 
-        status.textContent =
-        "🎙 Sedang merekam...";
-
+        status.textContent = "🎙 Sedang merekam...";
         startBtn.disabled = true;
         stopBtn.disabled = false;
 
-    } catch(err) {
-
+    } catch (err) {
         console.error(err);
-
-        status.textContent =
-        "❌ Gagal mengakses mikrofon";
+        status.textContent = "❌ Mikrofon tidak bisa diakses";
     }
 };
 
 // =========================
-// STOP RECORDING
+// STOP + UPLOAD
 // =========================
 
 stopBtn.onclick = () => {
@@ -189,63 +172,33 @@ stopBtn.onclick = () => {
 
         try {
 
-            status.textContent =
-            "☁️ Upload ke Supabase...";
-
-            const webmBlob =
-            new Blob(chunks, {
+            const blob = new Blob(chunks, {
                 type: "audio/webm"
             });
-            
-            const audioBlob = webmBlob;
 
-            let fileName =
-            fileNameInput?.value.trim();
-            
-            if (!fileName) {
-                fileName =
-                "recording_" + Date.now();
-            }
-            
-            const finalName =
-            fileName + ".webm";
+            let name = fileNameInput.value.trim();
+            if (!name) name = "recording_" + Date.now();
 
-            if (!fileName) {
-                fileName =
-                "recording_" + Date.now();
-            }
+            const finalName = name + ".webm";
 
+            const { error } = await supabaseClient.storage
+                .from("recordings")
+                .upload(finalName, blob, {
+                    contentType: "audio/webm",
+                    upsert: true
+                });
 
+            if (error) throw error;
 
-            const { error } =
-            await supabaseClient.storage
-            .from("recordings")
-            .upload(
-              finalName,
-              audioBlob,
-              {
-                  contentType: "audio/webm",
-                  upsert: true
-              }
-          );
-            if (error)
-                throw error;
+            status.textContent = "✅ Upload selesai";
 
-            status.textContent =
-            "✅ Upload selesai";
-
-            if (fileNameInput) {
-                fileNameInput.value = "";
-            }
+            fileNameInput.value = "";
 
             loadFiles();
 
-        } catch(err) {
-
+        } catch (err) {
             console.error(err);
-
-            status.textContent =
-            "❌ " + err.message;
+            status.textContent = "❌ " + err.message;
         }
     };
 
@@ -253,9 +206,10 @@ stopBtn.onclick = () => {
     stopBtn.disabled = true;
 };
 
-
 // =========================
-// INIT
+// INIT (IMPORTANT FIX)
 // =========================
 
-loadFiles();
+document.addEventListener("DOMContentLoaded", () => {
+    loadFiles();
+});

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Player</title>
+
+  <link rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body{
+      font-family: Arial;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+      background:#111;
+      color:white;
+      flex-direction:column;
+    }
+
+    .box{
+      background:#222;
+      padding:20px;
+      border-radius:12px;
+      text-align:center;
+      width:300px;
+    }
+
+    button{
+      margin-top:10px;
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .back{ background:#10b981; color:white; }
+    .download{ background:#2563eb; color:white; }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h3>🎵 Audio Player</h3>
+
+  <audio id="audio" controls style="width:100%"></audio>
+
+  <button class="download" onclick="downloadFile()">
+    ⬇ Download
+  </button>
+
+  <button class="back" onclick="goBack()">
+    ⬅ Kembali
+  </button>
+
+</div>
+
+<script>
+
+const urlParams = new URLSearchParams(window.location.search);
+const file = urlParams.get("file");
+
+const audio = document.getElementById("audio");
+
+audio.src = file;
+
+// download
+function downloadFile(){
+  const a = document.createElement("a");
+  a.href = file;
+  a.download = "audio.webm";
+  a.click();
+}
+
+// back
+function goBack(){
+  history.back();
+}
+
+</script>
+
+</body>
+</html>
