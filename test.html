@@ -19,30 +19,13 @@ body{
     padding:20px;
 }
 
-.file-input-wrapper{
-    margin: 15px 0;
-}
-
-.file-input{
-    width: 100%;
-    padding: 14px 16px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 15px;
-    color: #1e293b;
-    box-sizing: border-box;
-    transition: .25s;
-}
-
-.file-input:focus{
-    background: #fff;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 4px rgba(79,70,229,.15);
-}
-
-.file-input::placeholder{
-    color: #94a3b8;
+.container{
+    max-width:700px;
+    margin:auto;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
 }
 
 button{
@@ -92,14 +75,6 @@ audio{
 
     <h2>🎙 Voice Recorder Pro</h2>
 
-    <div class="file-input-wrapper">
-      <input
-          type="text"
-          id="fileName"
-          class="file-input"
-          placeholder="Masukkan nama file MP3">
-  </div>
-
     <button id="startBtn">
         ▶ Start Recording
     </button>
@@ -138,8 +113,7 @@ if (!navigator.mediaDevices ||
         "❌ Browser/WebView tidak mendukung perekaman audio";
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
+
 <script src="app.js"></script>
 
 </body>
