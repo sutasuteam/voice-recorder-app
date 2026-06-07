@@ -3,20 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voice Recorder</title>
+<title>Voice Recorder Pro</title>
 <link rel="stylesheet" href="style.css">
+<link rel="shortcut icon" href="icon/3700401-microphone-radio-recording-sound-technology-vintage-voice_108796.png" type="image/x-icon">
 </head>
+
 <body>
 
 <div class="container">
-  <h1>🎤 Voice Recorder</h1>
+  <h2>🎙 Voice Recorder Pro</h2>
 
-  <button id="startBtn">Start</button>
+  <button id="startBtn">Start Recording</button>
   <button id="stopBtn" disabled>Stop</button>
 
   <p id="status">Idle</p>
 
-  <audio id="audioPlayback" controls></audio>
+  <h3>📋 Daftar Recording</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nama File</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+
+    <tbody id="list"></tbody>
+  </table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>

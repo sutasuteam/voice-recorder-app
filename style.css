@@ -4,25 +4,41 @@ body {
     color: white;
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    padding: 20px;
   }
   
   .container {
-    text-align: center;
+    width: 100%;
+    max-width: 500px;
     background: #1e293b;
     padding: 20px;
     border-radius: 12px;
-    width: 300px;
   }
   
   button {
     padding: 10px;
-    margin: 10px;
-    border-radius: 8px;
+    margin: 5px;
     border: none;
+    border-radius: 8px;
     cursor: pointer;
   }
   
   #startBtn { background: #22c55e; }
   #stopBtn { background: #ef4444; }
+  
+  table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+  }
+  
+  td button {
+    margin-right: 5px;
+    font-size: 12px;
+  }
