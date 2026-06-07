@@ -62,6 +62,8 @@ h2{
   justify-content:center;
   align-items:center;
   transition:0.2s;
+  position: relative;
+  top: 23px;
 }
 
 /* download */
