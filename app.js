@@ -5,16 +5,37 @@ const list = document.getElementById("list");
 const fileNameInput = document.getElementById("fileName");
 
 // =========================
-// SUPABASE
+// 🔥 FIREBASE — mencatat daftar rekaman (menggantikan Supabase)
 // =========================
+// Pakai config Firebase yang SAMA seperti Song Writer Pro (project "song-writer-pro").
+// Kalau kamu mau pisahkan jadi project Firebase sendiri, ganti nilai di bawah ini
+// dengan firebaseConfig dari project barumu.
 
-const SUPABASE_URL = "https://btajgtzfoyadcnqfgjsg.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0YWpndHpmb3lhZGNucWZnanNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTQ3NzEsImV4cCI6MjA5NTMzMDc3MX0.kD81Imzw3NQ_ZTgj5nRPrKfh7Ong7Zmwt7I7WeyeM5M";
+const firebaseConfig = {
+  apiKey: "AIzaSyDbsnytQw6Y6QodWu2dRGkzDsakHhmlH_A",
+  authDomain: "song-writer-pro.firebaseapp.com",
+  projectId: "song-writer-pro",
+  storageBucket: "song-writer-pro.firebasestorage.app",
+  messagingSenderId: "40347373117",
+  appId: "1:40347373117:web:0bd09b184210c58866a454",
+  measurementId: "G-EHZWJWGF7L"
+};
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// Collection terpisah dari "songs" milik Song Writer Pro, supaya tidak tercampur.
+const recordingsCollection = db.collection("recordings");
+
+// =========================
+// 🌤️ CLOUDINARY — penyimpanan file audio (menggantikan Supabase Storage)
+// =========================
+// Pakai akun Cloudinary & upload preset yang sama seperti Song Writer Pro.
+// Kalau mau folder terpisah, buat upload preset baru di Cloudinary Console
+// (Settings → Upload → Upload presets → Unsigned) lalu ganti nilai di bawah.
+
+const CLOUDINARY_CLOUD_NAME = "y6hrjigr";
+const CLOUDINARY_UPLOAD_PRESET = "song_writer_music";
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
 // =========================
 // VARIABLES
@@ -26,30 +47,47 @@ let chunks = [];
 // =========================
 // DOWNLOAD
 // =========================
+// Diambil sebagai blob dulu (bukan langsung href) supaya browser benar-benar
+// mendownload filenya, bukan cuma membuka di tab baru — karena file sekarang
+// datang dari domain lain (Cloudinary), bukan lagi dari domain Supabase.
 
-window.downloadFile = function(url, fileName) {
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+window.downloadFile = async function(url, fileName) {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+        console.error(err);
+        alert("Gagal download: " + err.message);
+    }
 };
 
 // =========================
 // DELETE
 // =========================
+// Catatan: ini menghapus rekaman dari DAFTAR (Firestore) saja.
+// File audio aslinya tetap tersimpan di Cloudinary (tidak masalah — gratis,
+// tidak kena biaya). Kalau nanti perlu hapus permanen dari Cloudinary juga,
+// itu butuh sedikit kode tambahan di backend (API secret tidak boleh
+// ditaruh di browser).
 
-window.deleteFile = async function(fileName) {
+window.deleteFile = async function(id) {
 
-    const ok = confirm("Hapus file ini?");
+    const ok = confirm("Hapus rekaman ini dari daftar?");
     if (!ok) return;
 
-    const { error } = await supabaseClient.storage
-        .from("recordings")
-        .remove([fileName]);
-
-    if (error) {
+    try {
+        await recordingsCollection.doc(id).delete();
+    } catch (error) {
         alert(error.message);
         return;
     }
@@ -58,73 +96,72 @@ window.deleteFile = async function(fileName) {
 };
 
 // =========================
-// LOAD FILES (FIXED)
+// LOAD FILES — dari Firestore (bukan lagi list storage Supabase)
 // =========================
 
 async function loadFiles() {
 
     list.innerHTML = "Loading...";
 
-    const { data, error } = await supabaseClient.storage
-        .from("recordings")
-        .list();
+    try {
+        const snapshot = await recordingsCollection.orderBy("createdAt", "desc").get();
 
-    if (error) {
-        console.error("SUPABASE ERROR:", error);
-        list.innerHTML = "❌ Gagal load file";
-        return;
-    }
+        if (snapshot.empty) {
+            list.innerHTML = "<div class='empty-state'>Belum ada rekaman</div>";
+            return;
+        }
 
-    if (!data || data.length === 0) {
-        list.innerHTML = "<div class='empty-state'>Belum ada rekaman</div>";
-        return;
-    }
+        list.innerHTML = "";
 
-    list.innerHTML = "";
+        snapshot.forEach(doc => {
 
-    data.forEach(file => {
+            const data = doc.data();
+            const id = doc.id;
 
-        const { data: publicData } =
-            supabaseClient.storage
-                .from("recordings")
-                .getPublicUrl(file.name);
+            const row = document.createElement("div");
 
-        const row = document.createElement("div");
-
-        row.innerHTML = `
-        <div class="audio-card">
-        
-            <div class="audio-info">
-        
-                <div class="audio-name">
-                    🎵 ${file.name}
+            row.innerHTML = `
+            <div class="audio-card">
+            
+                <div class="audio-info">
+            
+                    <div class="audio-name">
+                        🎵 ${data.name}
+                    </div>
+            
+                    <audio controls src="${data.url}"></audio>
+            
                 </div>
-        
-                <audio controls src="${publicData.publicUrl}"></audio>
-        
+            
+                <div class="audio-actions">
+            
+                    <button class="download-btn"
+                        onclick="downloadFile('${data.url}', '${data.name}')">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+            
+                    <button class="delete-btn"
+                        onclick="deleteFile('${id}')">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+            
+                    <button class="open-btn"
+                        onclick="window.location.href='player.html?file=${encodeURIComponent(data.url)}'">
+                        🎧
+                    </button>
+            
+                </div>
+            
             </div>
-        
-            <div class="audio-actions">
-        
+            `;
 
-        
-                <button class="delete-btn"
-                    onclick="deleteFile('${file.name}')">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-        
-                <button class="open-btn"
-                    onclick="window.location.href='player.html?file=${publicData.publicUrl}'">
-                    🎧
-                </button>
-        
-            </div>
-        
-        </div>
-        `;
+            list.appendChild(row);
+        });
 
-        list.appendChild(row);
-    });
+    } catch (error) {
+        console.error("FIRESTORE ERROR:", error);
+        list.innerHTML = "❌ Gagal load file";
+    }
 }
 
 // =========================
@@ -159,7 +196,7 @@ startBtn.onclick = async () => {
 };
 
 // =========================
-// STOP + UPLOAD
+// STOP + UPLOAD ke Cloudinary, lalu catat ke Firestore
 // =========================
 
 stopBtn.onclick = () => {
@@ -181,14 +218,29 @@ stopBtn.onclick = () => {
 
             const finalName = name + ".webm";
 
-            const { error } = await supabaseClient.storage
-                .from("recordings")
-                .upload(finalName, blob, {
-                    contentType: "audio/webm",
-                    upsert: true
-                });
+            status.textContent = "⏳ Mengunggah...";
 
-            if (error) throw error;
+            const formData = new FormData();
+            formData.append("file", blob, finalName);
+            formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+            formData.append("resource_type", "video"); // Cloudinary memperlakukan audio di bawah kategori "video"
+
+            const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error?.message || "Upload ke Cloudinary gagal");
+            }
+
+            await recordingsCollection.add({
+                name: finalName,
+                url: data.secure_url,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
             status.textContent = "✅ Upload selesai";
 
@@ -207,7 +259,7 @@ stopBtn.onclick = () => {
 };
 
 // =========================
-// INIT (IMPORTANT FIX)
+// INIT
 // =========================
 
 document.addEventListener("DOMContentLoaded", () => {

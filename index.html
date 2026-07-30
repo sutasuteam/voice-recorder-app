@@ -59,7 +59,11 @@ if (!navigator.mediaDevices ||
         "❌ Browser/WebView tidak mendukung perekaman audio";
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<!-- 🔥 FIREBASE — menggantikan Supabase (untuk mencatat daftar rekaman) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
 <script src="app.js"></script>
 
